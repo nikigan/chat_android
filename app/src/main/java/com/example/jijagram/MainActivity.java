@@ -1,17 +1,17 @@
 package com.example.jijagram;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.Consumer;
 import androidx.core.util.Pair;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.DialogInterface;
+import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         server.connect();
+        server.sendName(myName);
     }
 
     @Override
@@ -80,30 +81,67 @@ public class MainActivity extends AppCompatActivity {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String userMessage = messageField.getText().toString();
-                mc.addMessage(
-                        new MessageController.Message(userMessage,
-                                myName,
-                                true)
-                );
-                server.sendMessage(userMessage);
-                messageField.getText().clear();
+                if (server.getAvailable()) {
+
+                    String userMessage = messageField.getText().toString();
+                    mc.addMessage(
+                            new MessageController.Message(userMessage,
+                                    myName,
+                                    true)
+                    );
+                    server.sendMessage(userMessage);
+                    messageField.getText().clear();
+                }
+                else {
+                    String errorText = "Проблема с подключением к серверу! Попробуйте отправить сообщение позже!";
+                    Toast.makeText(MainActivity.this, errorText, Toast.LENGTH_LONG).show();
+                    Button testBtn = new Button(MainActivity.this);
+                    testBtn.setText("Тест сообщений");
+
+                    LinearLayout view = findViewById(R.id.linearLayout2);
+                    Button sendButton = findViewById(R.id.sendButton);
+                    sendButton.setVisibility(View.GONE);
+                    view.addView(testBtn);
+
+                    testBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            messageField.getText().clear();
+                            hideKeyboard();
+                            mc.addMessage(
+                                    new MessageController.Message("Hello world!",
+                                            myName,
+                                            true)
+                            );
+                            mc.addMessage(
+                                    new MessageController.Message("Hi there!",
+                                            "Anonymous",
+                                            false)
+                            );
+                            mc.addMessage(
+                                    new MessageController.Message("What's UP?",
+                                            "Stranger",
+                                            false)
+                            );
+                            mc.addMessage(
+                                    new MessageController.Message("It is JijaGram, not WhatsApp",
+                                            myName,
+                                            true)
+                            );
+                        }
+                    });
+                }
             }
         });
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter your name: ");
+        myName = getIntent().getStringExtra("userName");
+    }
 
-        final EditText nameInput = new EditText(this);
-        builder.setView(nameInput);
-        builder.setPositiveButton("Сохранить", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                myName = nameInput.getText().toString();
-                server.sendName(myName);
-            }
-        });
-
-        builder.show();
+    private void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null){
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }

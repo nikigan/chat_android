@@ -17,6 +17,12 @@ public class Server {
     WebSocketClient client;
     URI address;
 
+    private Boolean isAvailable = false;
+
+    public Boolean getAvailable() {
+        return isAvailable;
+    }
+
     private Consumer<Pair<String, String>> messageConsumer;
     private Consumer<Pair<String, String>> privateMessageConsumer;
 
@@ -38,6 +44,7 @@ public class Server {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
                 Log.i("WSSERVER", "Connected to server " + handshakedata);
+                isAvailable = true;
             }
 
             @Override
@@ -54,11 +61,13 @@ public class Server {
             @Override
             public void onClose(int code, String reason, boolean remote) {
                 Log.i("WSSERVER", "Connection closed!");
+                isAvailable = false;
             }
 
             @Override
             public void onError(Exception ex) {
                 Log.i("WSSERVER", "Error " + ex);
+                isAvailable = false;
             }
         };
 
